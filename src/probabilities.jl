@@ -1,6 +1,7 @@
 # Probability table for computing m_over_n
 # when specifying k and the error rate, but not
 # the number of required bits per element
+# Table from: http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html
 k_errors = Array(Any, 12)
 
 k_errors[1] = [1.0,

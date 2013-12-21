@@ -10,7 +10,10 @@ type BloomFilter
 end
 
 ### Hash functions (uses 2 hash method)
-# Uses MurmurHash on 64-bit systems so sufficiently vast
+# Uses MurmurHash on 64-bit systems so sufficiently randomness/speed
+# Get the nth hash of a string using the formula hash_a + n * hash_b
+# which uses 2 hash functions vs. k and has comparable properties
+# See Kirsch and Mitzenmacher, 2008: http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/rsa.pdf
 function hash_n(key::Any, k::Int, max::Int)
     a_hash = hash(key, 0)
     b_hash = hash(key, 170)
