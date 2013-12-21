@@ -1,3 +1,5 @@
+include("probabilities.jl")
+
 type BloomFilter
     array::Union(BitVector, BitArray)
     k::Int
@@ -44,10 +46,22 @@ end
 ## TODO: Add 3 add'l dispatches (in-memory, IOStream, String) when specifying capacity, error rate, and k (using pre-computed probability table)
 # # Specify capacity, error rate, and k (*best* call in many circumstances, uses pre-computed probabilities table)
 # function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
+function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
+    bits_per_elem = get_k_error(error_rate, k_hashes)
+    BloomFilter(capacity, bits_per_elem, k_hashes)
+end
 
-# end
+function BloomFilter(mmap_handle::IOStream, capacity::Int, error_rate::Float64, k_hashes::Int)
+    bits_per_elem = get_k_error(error_rate, k_hashes)
+    BloomFilter(mmap_handle, capacity, bits_per_elem, k_hashes)
+end
 
-# Specify capacity and error rate only
+function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64, k_hashes::Int)
+    bits_per_elem = get_k_error(error_rate, k_hashes)
+    BloomFilter(mmap_string, capacity, bits_per_elem, k_hashes)
+end
+
+# Specify capacity and error rate only, uses optimal number of k hashes (not really recommended as k may become large enough to be computationally taxing)
 function BloomFilter(capacity::Int, error_rate::Float64)
     bits_per_elem = int(ceil(-1.0 * (log(error_rate) / (log(2) ^ 2))))
     k_hashes = int(round(log(2) * bits_per_elem))  # Note: ceil() would be strictly more conservative
