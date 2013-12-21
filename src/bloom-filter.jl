@@ -4,6 +4,7 @@ type BloomFilter
     capacity::Int
     error_rate::Float64
     n_bits::Int
+    mmap_location::String
 end
 
 ### Hash functions (uses 2 hash method)
@@ -22,13 +23,13 @@ end
 # Specify key params explicitly
 function BloomFilter(capacity::Int, bits_per_elem::Int, k_hashes::Int)
     n_bits = capacity * bits_per_elem
-    BloomFilter(BitVector(n_bits), k_hashes, capacity, NaN, n_bits)
+    BloomFilter(BitVector(n_bits), k_hashes, capacity, NaN, n_bits, "")
 end
 
 function BloomFilter(mmap_handle::IOStream, capacity::Int, bits_per_elem::Int, k_hashes::Int)
     n_bits = capacity * bits_per_elem
     mb = mmap_bitarray((n_bits, 1), mmap_handle)
-    BloomFilter(mb, k_hashes, capacity, NaN, n_bits)
+    BloomFilter(mb, k_hashes, capacity, NaN, n_bits, mmap_handle.name)
 end
 
 function BloomFilter(mmap_string::String, capacity::Int, bits_per_elem::Int, k_hashes::Int)
@@ -37,7 +38,7 @@ function BloomFilter(mmap_string::String, capacity::Int, bits_per_elem::Int, k_h
     else
         mmap_handle = open(mmap_string, "w+")
     end
-    BloomFilter(mmap_handle, bits_per_elem, k_hashes)
+    BloomFilter(mmap_handle, capacity, bits_per_elem, k_hashes)
 end
 
 ## TODO: Add 3 add'l dispatches (in-memory, IOStream, String) when specifying capacity, error rate, and k (using pre-computed probability table)
@@ -51,7 +52,7 @@ function BloomFilter(capacity::Int, error_rate::Float64)
     bits_per_elem = int(ceil(-1.0 * (log(error_rate) / (log(2) ^ 2))))
     k_hashes = int(round(log(2) * bits_per_elem))  # Note: ceil() would be strictly more conservative
     n_bits = capacity * bits_per_elem
-    BloomFilter(BitVector(n_bits), k_hashes, capacity, error_rate, n_bits)
+    BloomFilter(BitVector(n_bits), k_hashes, capacity, error_rate, n_bits, "")
 end
 
 function BloomFilter(mmap_handle::IOStream, capacity::Int, error_rate::Float64)
@@ -59,7 +60,7 @@ function BloomFilter(mmap_handle::IOStream, capacity::Int, error_rate::Float64)
     k_hashes = int(round(log(2) * bits_per_elem))  # Note: ceil() would be strictly more conservative
     n_bits = capacity * bits_per_elem
     mb = mmap_bitarray((n_bits, 1), mmap_handle)
-    BloomFilter(mb, k_hashes, capacity, error_rate, n_bits)
+    BloomFilter(mb, k_hashes, capacity, error_rate, n_bits, mmap_handle.name)
 end
 
 function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64)
@@ -87,4 +88,15 @@ function contains(bf::BloomFilter, key::Any)
         end
     end
     return true
+end
+
+function show(io::IO, bf::BloomFilter)
+    @printf "Bloom filter with capacity %d, " bf.capacity
+    @printf "error rate of %.2f, and k of %d.\n" (bf.error_rate * 100) (bf.k)
+    @printf "Total bits required: %d (%.1f / element).\n" bf.n_bits (bf.n_bits / bf.capacity)
+    if bf.mmap_location != ""
+        @printf "Bloom filter is backed by mmap at %s." bf.mmap_location
+    else
+        @printf "Bloom filter is in-memory."
+    end
 end
