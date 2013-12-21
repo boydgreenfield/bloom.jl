@@ -1,5 +1,5 @@
 module Bloom
-
-# package code goes here
-
-end # module
+	import Base.insert!, Base.contains
+	export BloomFilter
+	include("bloom-filter.jl")
+end
