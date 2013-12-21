@@ -114,5 +114,5 @@ function get_k_error(error_rate::Float64, k_hashes::Int)
     		end
     	end
     end
-    return m_over_n
+    return m_over_n, k_errors[k_hashes][m_over_n]
 end

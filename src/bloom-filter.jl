@@ -47,18 +47,25 @@ end
 # # Specify capacity, error rate, and k (*best* call in many circumstances, uses pre-computed probabilities table)
 # function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
 function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
-    bits_per_elem = get_k_error(error_rate, k_hashes)
-    BloomFilter(capacity, bits_per_elem, k_hashes)
+    bits_per_elem, error_rate = get_k_error(error_rate, k_hashes)
+    n_bits = capacity * bits_per_elem
+    BloomFilter(BitVector(n_bits), k_hashes, capacity, error_rate, n_bits, "")
 end
 
 function BloomFilter(mmap_handle::IOStream, capacity::Int, error_rate::Float64, k_hashes::Int)
-    bits_per_elem = get_k_error(error_rate, k_hashes)
-    BloomFilter(mmap_handle, capacity, bits_per_elem, k_hashes)
+    bits_per_elem, error_rate = get_k_error(error_rate, k_hashes)
+    n_bits = capacity * bits_per_elem
+    mb = mmap_bitarray((n_bits, 1), mmap_handle)
+    BloomFilter(mb, k_hashes, capacity, error_rate, n_bits, mmap_handle.name)
 end
 
 function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64, k_hashes::Int)
-    bits_per_elem = get_k_error(error_rate, k_hashes)
-    BloomFilter(mmap_string, capacity, bits_per_elem, k_hashes)
+    if isfile(mmap_string)
+        mmap_handle = open(mmap_string, "r+")
+    else
+        mmap_handle = open(mmap_string, "w+")
+    end
+    BloomFilter(mmap_handle, capacity, error_rate, k_hashes)
 end
 
 # Specify capacity and error rate only, uses optimal number of k hashes (not really recommended as k may become large enough to be computationally taxing)
