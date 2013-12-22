@@ -90,3 +90,19 @@ for test_key in test_keys
     assert(contains(bfb, test_key))
 end
 )
+
+## Note: This doesn't work as hash(x::String, seed::Int)
+## is only defined for strings in dict.jl
+# # Test insertions of non-string types
+# test_other_a = 17    # Int
+# test_other_b = 15.6  # Float
+# test_other_c = "String" #("Tuples", "of", "strings")
+
+# # Test alias'd command
+# add!(bfb, test_other_a)
+# add!(bfb, test_other_b)
+# add!(bfb, test_other_c)
+
+# assert(contains(bfb, test_other_a))
+# assert(contains(bfb, test_other_b))
+# assert(contains(bfb, test_other_b))

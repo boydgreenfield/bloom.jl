@@ -14,7 +14,7 @@ end
 # Get the nth hash of a string using the formula hash_a + n * hash_b
 # which uses 2 hash functions vs. k and has comparable properties
 # See Kirsch and Mitzenmacher, 2008: http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/rsa.pdf
-function hash_n(key::Any, k::Int, max::Int)
+function hash_n(key::String, k::Int, max::Int)
     a_hash = hash(key, 0)
     b_hash = hash(key, 170)
     hashes = Array(Uint, k)
@@ -108,18 +108,18 @@ function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64)
 end
 
 ### Bloom filter functions: insert!, add! (alias to insert), contains, and show
-function insert!(bf::BloomFilter, key::Any)
+function insert!(bf::BloomFilter, key::String)
     hashes = hash_n(key, bf.k, bf.n_bits)
     for h in hashes
         bf.array[h] = 1
     end
 end
 
-function add!(bf::BloomFilter, key::Any)
+function add!(bf::BloomFilter, key::String)
     insert!(bf, key)
 end
 
-function contains(bf::BloomFilter, key::Any)
+function contains(bf::BloomFilter, key::String)
     hashes = hash_n(key, bf.k, bf.n_bits)
     for h in hashes
         if bf.array[h] != 1
