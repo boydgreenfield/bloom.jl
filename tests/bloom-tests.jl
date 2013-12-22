@@ -14,8 +14,8 @@ bf3 = BloomFilter("/tmp/test_array2.array", 1000, 20, 4)
 
 # Second group of constructors: capacity, error rate, k
 bf4 = BloomFilter(1000, 0.01, 5)
-bf5 = BloomFilter(open("/tmp/test_array3.array", "w+"), 0.01, 5)
-bf6 = BloomFilter("/tmp/test_array4.array", 0.01, 5)
+bf5 = BloomFilter(open("/tmp/test_array3.array", "w+"), 1000, 0.01, 5)
+bf6 = BloomFilter("/tmp/test_array4.array", 1000, 0.01, 5)
 
 # Third group of constructors: capacity and error rate only,
 # computes optimal k from a space efficiency perspective
@@ -26,7 +26,7 @@ bf9 = BloomFilter("/tmp/test_array6.array", 1000, 0.01)
 # Now create a larger in-memory Bloom filter and an mmap-backed one for testing
 n = 100000
 bfa = BloomFilter(n, 0.001, 5)
-bfb = BloomFilter("/tmp/test_array_lg.array", 0.001, 5)
+bfb = BloomFilter("/tmp/test_array_lg.array", n, 0.001, 5)
 
 # Test with random strings
 random_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -72,7 +72,7 @@ end
 bfb = 0
 gc()
 
-bfb = BloomFilter(open("/tmp/test_array_lg.array", "r+"), n, 0.001)
+bfb = BloomFilter(open("/tmp/test_array_lg.array", "r+"), n, 0.001, 5)
 println("For lookups after re-opening (mmap-backed):")
 @time(
 for test_key in test_keys
@@ -83,7 +83,7 @@ end
 bfb = 0
 gc()
 
-bfb = BloomFilter("/tmp/test_array_lg.array", n, 0.001)
+bfb = BloomFilter("/tmp/test_array_lg.array", n, 0.001, 5)
 println("For lookups after re-opening second time (mmap-backed):")
 @time(
 for test_key in test_keys
