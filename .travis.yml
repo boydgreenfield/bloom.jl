@@ -10,4 +10,4 @@ before_install:
   - sudo apt-get install libpcre3-dev julia -y
 script:
   - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Bloom"))`); Pkg.pin("Bloom"); Pkg.resolve()'
-  - julia -e 'using Bloom; @assert isdefined(:Bloom); @assert typeof(Bloom) === Module'
+  - julia -e 'using Bloom; @assert isdefined(:Bloom); @assert typeof(Bloom) === Module; include(joinpath(Pkg.dir("Bloom"), "test/bloom-tests.jl"))'
