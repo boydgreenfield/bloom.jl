@@ -1,7 +1,9 @@
+# Testing note: only run this file once per Julia session
+# otherwise the in-memory or mmap'd files can get multiple
+# sets of keys added to them and become too full
 using Bloom
 
-
-# Set up 9 sample Bloom filters using different constructors
+# First set up 9 sample Bloom filters using different constructors
 # (Ordered as in bloom-filter.jl)
 
 # Raw construction
@@ -91,6 +93,39 @@ for test_key in test_keys
 end
 )
 
+
+# Probabilistic tests – note these may fail every once in a while...
+# (but very very rarely)
+test_keys_p = Array(String, n)
+for i in 1:n
+    temp_str = ""
+    for j in 1:9  # Longer so not in by definition
+        temp_str = string(temp_str, random_chars[rand(1:62)])
+    end
+    test_keys_p[i] = temp_str
+end
+
+false_positives_a = 0
+false_positives_b = 0
+for test_key_p in test_keys_p
+    if contains(bfa, test_key_p)
+        false_positives_a += 1
+    end
+    if contains(bfb, test_key_p)
+        false_positives_b += 1
+    end
+end
+
+# Less than 50% extra false positives
+@printf "%d false positives in %d tests\n" false_positives_a n
+@printf "Error rate for in-memory Bloom filter %.2f%%\n" (bfa.error_rate * 100)
+assert((false_positives_a / n) <= (1.5 * bfa.error_rate))
+
+@printf "%d false positives in %d tests\n" false_positives_b n
+@printf "Error rate for in-memory Bloom filter %.2f%%\n" (bfb.error_rate * 100)
+assert((false_positives_b / n) <= (1.5 * bfb.error_rate))
+
+
 ## Note: This doesn't work as hash(x::String, seed::Int)
 ## is only defined for strings in dict.jl
 # # Test insertions of non-string types
@@ -106,3 +141,12 @@ end
 # assert(contains(bfb, test_other_a))
 # assert(contains(bfb, test_other_b))
 # assert(contains(bfb, test_other_b))
+
+# Clean up mmap-backed temp files (otherwise can end up re-opening them and writing multiple key sets to one file!)
+rm("/tmp/test_array1.array")
+rm("/tmp/test_array2.array")
+rm("/tmp/test_array3.array")
+rm("/tmp/test_array4.array")
+rm("/tmp/test_array5.array")
+rm("/tmp/test_array6.array")
+rm("/tmp/test_array_lg.array")
