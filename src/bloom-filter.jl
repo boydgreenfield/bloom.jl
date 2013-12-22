@@ -10,7 +10,7 @@ type BloomFilter
 end
 
 ### Hash functions (uses 2 hash method)
-# Uses MurmurHash on 64-bit systems so sufficiently randomness/speed
+# Uses MurmurHash on 64-bit systems so sufficient randomness/speed
 # Get the nth hash of a string using the formula hash_a + n * hash_b
 # which uses 2 hash functions vs. k and has comparable properties
 # See Kirsch and Mitzenmacher, 2008: http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/rsa.pdf
@@ -24,8 +24,11 @@ function hash_n(key::Any, k::Int, max::Int)
     return hashes
 end
 
-### Bloom filter constructor
-# Specify key params explicitly
+### Bloom filter constructors
+# Constructor group #1: (optional IOStream / string to mmap-array), capacity, bits per element, k
+# Note that this inserts NaN for the error rate, as this module does not include functionality
+# for calculating error rates for any arbitrary bits per element and k (only a subset, see #2 below)
+# USE CASES: Advanced use only. Not recommended as default constructor choice.
 function BloomFilter(capacity::Int, bits_per_elem::Int, k_hashes::Int)
     n_bits = capacity * bits_per_elem
     BloomFilter(BitVector(n_bits), k_hashes, capacity, NaN, n_bits, "")
@@ -46,9 +49,12 @@ function BloomFilter(mmap_string::String, capacity::Int, bits_per_elem::Int, k_h
     BloomFilter(mmap_handle, capacity, bits_per_elem, k_hashes)
 end
 
-## TODO: Add 3 add'l dispatches (in-memory, IOStream, String) when specifying capacity, error rate, and k (using pre-computed probability table)
-# # Specify capacity, error rate, and k (*best* call in many circumstances, uses pre-computed probabilities table)
-# function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
+# Constructor group #2: (optional IOStream / string to mmap-array), capacity, error rate, k hashes
+# Looks up the optimal number of bits per element given an error rate and specified k in a pre-calculated
+# probability table. Note that k must be <= 12 or an error will be thrown. Similarly, this method
+# does not support Bloom filter construction where more than 4 bytes are required per element
+# (though that can manually be accomplished with one of the above constrcutors).
+# USE CASES: Recommended for most applications, but carries modest space-tradeoff for slightly faster operation with fewer hashes
 function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
     bits_per_elem, error_rate = get_k_error(error_rate, k_hashes)
     n_bits = capacity * bits_per_elem
@@ -71,7 +77,12 @@ function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64, k_
     BloomFilter(mmap_handle, capacity, error_rate, k_hashes)
 end
 
-# Specify capacity and error rate only, uses optimal number of k hashes (not really recommended as k may become large enough to be computationally taxing)
+# Constructor group #3: (optional IOStream / string to mmap-array), capacity, error rate
+# Computes an optimal k for a given error rate, where k is selected to minimize the overall
+# space required for the Bloom filter. In practice, k may be larger than desired and require
+# additional memory accesses.
+# USE CASES: Recommended when extreme space efficiency is required, and modestly slower insertions
+# and lookups are tolerable.
 function BloomFilter(capacity::Int, error_rate::Float64)
     bits_per_elem = int(ceil(-1.0 * (log(error_rate) / (log(2) ^ 2))))
     k_hashes = int(round(log(2) * bits_per_elem))  # Note: ceil() would be strictly more conservative
@@ -96,12 +107,16 @@ function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64)
     BloomFilter(mmap_handle, capacity, error_rate)
 end
 
-### Bloom filter functions
+### Bloom filter functions: insert!, add! (alias to insert), contains, and show
 function insert!(bf::BloomFilter, key::Any)
     hashes = hash_n(key, bf.k, bf.n_bits)
     for h in hashes
         bf.array[h] = 1
     end
+end
+
+function add!(bf::BloomFilter, key::Any)
+    insert!(bf, key)
 end
 
 function contains(bf::BloomFilter, key::Any)
