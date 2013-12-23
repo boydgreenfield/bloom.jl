@@ -51,7 +51,7 @@ end
 println("For lookups:")
 @time(
 for test_key in test_keys
-    add!(contains(bfa, test_key))
+    assert(contains(bfa, test_key))
 end
 )
 
