@@ -70,30 +70,6 @@ end
 )
 
 
-# Test re-opening bfb
-bfb = 0
-gc()
-
-bfb = BloomFilter(open("/tmp/test_array_lg.array", "r+"), n, 0.001, 5)
-println("For lookups after re-opening (mmap-backed):")
-@time(
-for test_key in test_keys
-    assert(contains(bfb, test_key))
-end
-)
-
-bfb = 0
-gc()
-
-bfb = BloomFilter("/tmp/test_array_lg.array", n, 0.001, 5)
-println("For lookups after re-opening second time (mmap-backed):")
-@time(
-for test_key in test_keys
-    assert(contains(bfb, test_key))
-end
-)
-
-
 # Probabilistic tests – note these may fail every once in a while...
 # (but very very rarely)
 test_keys_p = Array(String, n)
@@ -116,16 +92,42 @@ for test_key_p in test_keys_p
     end
 end
 
-# Less than 50% extra false positives
+# Less than 2x requested false positives... (to avoid failing too often out of pure chance)
 @printf "System is %s-bit\n" string(typeof(1))[4:5]
+@printf "In-memory Bloom is %.2f%% full\n" (100 * sum(bfa.array) / bfa.n_bits)
 @printf "%d false positives in %d tests\n" false_positives_a n
 @printf "Error rate for in-memory Bloom filter %.2f%%\n" (bfa.error_rate * 100)
-# assert((false_positives_a / n) <= (1.5 * bfa.error_rate))
+# assert((false_positives_a / n) <= (2.0 * bfa.error_rate))
 
+@printf "Mmap'd Bloom is %.2f%% full\n" (100 * sum(bfb.array) / bfb.n_bits)
 @printf "%d false positives in %d tests\n" false_positives_b n
 @printf "Error rate for in-memory Bloom filter %.2f%%\n" (bfb.error_rate * 100)
-# assert((false_positives_b / n) <= (1.5 * bfb.error_rate))
+# assert((false_positives_b / n) <= (2.0 * bfb.error_rate))
+assert(false_positives_a == false_positives_b)  # Must be true since bfa and bfb should be identical at bit-level
 
+
+# Test re-opening bfb
+bfb = 0
+gc()
+
+bfb = BloomFilter(open("/tmp/test_array_lg.array", "r+"), n, 0.001, 5)
+println("For lookups after re-opening (mmap-backed):")
+@time(
+for test_key in test_keys
+    assert(contains(bfb, test_key))
+end
+)
+
+bfb = 0
+gc()
+
+bfb = BloomFilter("/tmp/test_array_lg.array", n, 0.001, 5)
+println("For lookups after re-opening second time (mmap-backed):")
+@time(
+for test_key in test_keys
+    assert(contains(bfb, test_key))
+end
+)
 
 ## Note: This doesn't work as hash(x::String, seed::Int)
 ## is only defined for strings in dict.jl
