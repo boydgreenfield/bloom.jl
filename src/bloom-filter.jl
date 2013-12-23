@@ -127,7 +127,7 @@ end
 
 function show(io::IO, bf::BloomFilter)
     @printf "Bloom filter with capacity %d, " bf.capacity
-    @printf "error rate of %.2f, and k of %d.\n" (bf.error_rate * 100) (bf.k)
+    @printf "error rate of %.2f%%, and k of %d.\n" (bf.error_rate * 100) (bf.k)
     @printf "Total bits required: %d (%.1f / element).\n" bf.n_bits (bf.n_bits / bf.capacity)
     if bf.mmap_location != ""
         @printf "Bloom filter is backed by mmap at %s." bf.mmap_location
