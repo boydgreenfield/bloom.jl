@@ -44,21 +44,21 @@ end
 println("For insertions:")
 @time(
 for test_key in test_keys
-    insert!(bfa, test_key)
+    add!(bfa, test_key)
 end
 )
 
 println("For lookups:")
 @time(
 for test_key in test_keys
-    assert(contains(bfa, test_key))
+    add!(contains(bfa, test_key))
 end
 )
 
 println("For insertions (mmap-backed):")
 @time(
 for test_key in test_keys
-    insert!(bfb, test_key)
+    add!(bfb, test_key)
 end
 )
 

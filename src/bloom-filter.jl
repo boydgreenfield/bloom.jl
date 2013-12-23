@@ -108,15 +108,11 @@ function BloomFilter(mmap_string::String, capacity::Int, error_rate::Float64)
 end
 
 ### Bloom filter functions: insert!, add! (alias to insert), contains, and show
-function insert!(bf::BloomFilter, key::String)
+function add!(bf::BloomFilter, key::String)
     hashes = hash_n(key, bf.k, bf.n_bits)
     for h in hashes
         bf.array[h] = 1
     end
-end
-
-function add!(bf::BloomFilter, key::String)
-    insert!(bf, key)
 end
 
 function contains(bf::BloomFilter, key::String)
