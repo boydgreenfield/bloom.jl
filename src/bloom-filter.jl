@@ -1,7 +1,7 @@
 include("probabilities.jl")
 
 type BloomFilter
-    array::Union(BitVector, BitArray)
+    array::BitArray
     k::Int
     capacity::Int
     error_rate::Float64
@@ -31,7 +31,7 @@ end
 # USE CASES: Advanced use only. Not recommended as default constructor choice.
 function BloomFilter(capacity::Int, bits_per_elem::Int, k_hashes::Int)
     n_bits = capacity * bits_per_elem
-    BloomFilter(BitVector(n_bits), k_hashes, capacity, NaN, n_bits, "")
+    BloomFilter(falses((1, n_bits)), k_hashes, capacity, NaN, n_bits, "")
 end
 
 function BloomFilter(mmap_handle::IOStream, capacity::Int, bits_per_elem::Int, k_hashes::Int)
@@ -58,7 +58,7 @@ end
 function BloomFilter(capacity::Int, error_rate::Float64, k_hashes::Int)
     bits_per_elem, error_rate = get_k_error(error_rate, k_hashes)
     n_bits = capacity * bits_per_elem
-    BloomFilter(BitVector(n_bits), k_hashes, capacity, error_rate, n_bits, "")
+    BloomFilter(falses((n_bits, 1)), k_hashes, capacity, error_rate, n_bits, "")
 end
 
 function BloomFilter(mmap_handle::IOStream, capacity::Int, error_rate::Float64, k_hashes::Int)
@@ -87,7 +87,7 @@ function BloomFilter(capacity::Int, error_rate::Float64)
     bits_per_elem = int(ceil(-1.0 * (log(error_rate) / (log(2) ^ 2))))
     k_hashes = int(round(log(2) * bits_per_elem))  # Note: ceil() would be strictly more conservative
     n_bits = capacity * bits_per_elem
-    BloomFilter(BitVector(n_bits), k_hashes, capacity, error_rate, n_bits, "")
+    BloomFilter(falses((1, n_bits)), k_hashes, capacity, error_rate, n_bits, "")
 end
 
 function BloomFilter(mmap_handle::IOStream, capacity::Int, error_rate::Float64)
