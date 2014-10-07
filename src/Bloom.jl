@@ -1,5 +1,5 @@
 module Bloom
-	import Base.add!, Base.contains, Base.show
-	export BloomFilter
+	import Base.contains, Base.show
+	export BloomFilter, add!
 	include("bloom-filter.jl")
 end
